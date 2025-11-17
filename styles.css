@@ -551,10 +551,13 @@ body {
     .hero {
         padding-top: 7rem;
         background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/4.png');
+        justify-content: flex-start;
+        padding-top: 5.5rem;
     }
 
     .hero-content {
         padding-left: 0;
+        margin-top: 1rem;
     }
 
     .slogan {
@@ -620,13 +623,15 @@ body {
 
     .hero {
         padding: 1.5rem;
-        padding-top: 6rem;
+        padding-top: 4.5rem;
         min-height: 90vh;
         background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/4.png');
+        justify-content: flex-start;
     }
 
     .hero-content {
         padding-left: 0;
+        margin-top: 1rem;
     }
 
     .slogan {
