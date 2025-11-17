@@ -32,7 +32,6 @@ body {
 .header-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -50,7 +49,7 @@ body {
 }
 
 .logo img {
-    height: 50px;
+    height: 170px;
     width: auto;
     object-fit: contain;
 }
@@ -156,7 +155,7 @@ body {
     align-items: center;
     padding: 2rem;
     padding-top: 10rem;
-    background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/3.png');
+    background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/3_hor-nar.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -495,6 +494,7 @@ body {
     .features-image {
         flex: 0 0 auto;
         max-width: 400px;
+        display: none;
     }
 
     .contact-content {
@@ -550,7 +550,7 @@ body {
 
     .hero {
         padding-top: 7rem;
-        background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/4.png');
+        background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/1_vert-nar.png');
         justify-content: flex-start;
         padding-top: 5.5rem;
     }
@@ -625,7 +625,7 @@ body {
         padding: 1.5rem;
         padding-top: 4.5rem;
         min-height: 90vh;
-        background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/4.png');
+        background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/1_vert-nar.png');
         justify-content: flex-start;
     }
 
