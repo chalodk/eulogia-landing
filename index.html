@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eulogia.cl - Landing Page</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Markdown rendering libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -163,8 +166,59 @@
     <footer class="footer">
         <p>&copy; 2025 Eulogia.cl - Todos los derechos reservados</p>
         <p>Hecho en Chile con <3 </p>
-
+ 
     </footer>
+
+    <!-- Chatbot Widget -->
+    <div class="chatbot-container" id="chatbotContainer">
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                <div class="chatbot-header-content">
+                    <div class="chatbot-avatar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                        </svg>
+                    </div>
+                    <div class="chatbot-header-text">
+                        <h4>Eulogia</h4>
+                        <span class="chatbot-status">En línea</span>
+                    </div>
+                </div>
+                <button class="chatbot-close" id="chatbotClose" aria-label="Cerrar chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="chatbot-message chatbot-message-bot">
+                    <div class="message-content">
+                        <p>¡Hola! 👋 Soy Eulogia. ¿En qué puedo ayudarte hoy?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="chatbot-input-container">
+                <input type="text" 
+                       id="chatbotInput" 
+                       class="chatbot-input" 
+                       placeholder="Escribe tu mensaje..." 
+                       autocomplete="off">
+                <button class="chatbot-send" id="chatbotSend" aria-label="Enviar mensaje">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-toggle" id="chatbotToggle" aria-label="Abrir chat">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span class="chatbot-badge" id="chatbotBadge" style="display: none;">1</span>
+        </button>
+    </div>
 
     <script>
         // Mobile menu toggle
@@ -308,6 +362,169 @@
                 submitBtn.disabled = false;
                 btnText.style.display = 'inline';
                 btnLoader.style.display = 'none';
+            }
+        });
+
+        // Chatbot functionality
+        const chatbotToggle = document.getElementById('chatbotToggle');
+        const chatbotWindow = document.getElementById('chatbotWindow');
+        const chatbotClose = document.getElementById('chatbotClose');
+        const chatbotInput = document.getElementById('chatbotInput');
+        const chatbotSend = document.getElementById('chatbotSend');
+        const chatbotMessages = document.getElementById('chatbotMessages');
+        const chatbotBadge = document.getElementById('chatbotBadge');
+
+        // Webhook configuration - Replace with your n8n chatbot webhook URL
+        const CHATBOT_WEBHOOK_URL = 'https://n8n.agroanalytics.cl/webhook/eulogia-chat';
+        const CHATBOT_USERNAME = 'eulogia';
+        const CHATBOT_PASSWORD = 'm4rkzv1v3';
+
+        // Toggle chatbot window
+        chatbotToggle.addEventListener('click', function() {
+            chatbotWindow.classList.toggle('active');
+            if (chatbotWindow.classList.contains('active')) {
+                chatbotBadge.style.display = 'none';
+                chatbotInput.focus();
+            }
+        });
+
+        chatbotClose.addEventListener('click', function() {
+            chatbotWindow.classList.remove('active');
+        });
+
+        // Send message function
+        function sendMessage() {
+            const message = chatbotInput.value.trim();
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            chatbotInput.value = '';
+            chatbotSend.disabled = true;
+
+            // Show loading indicator
+            const loadingId = addLoadingMessage();
+
+            // Send to webhook
+            const credentials = btoa(`${CHATBOT_USERNAME}:${CHATBOT_PASSWORD}`);
+            
+            fetch(CHATBOT_WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': `Basic ${credentials}`
+                },
+                body: JSON.stringify({
+                    chatInput: message
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove loading message
+                removeLoadingMessage(loadingId);
+                
+                // Add bot response
+                const botMessage = data.output || data.response || data.text || 'Lo siento, no pude procesar tu mensaje.';
+                addMessage(botMessage, 'bot');
+            })
+            .catch(error => {
+                // Remove loading message
+                removeLoadingMessage(loadingId);
+                
+                // Show error message
+                addMessage('Lo siento, hubo un error al procesar tu mensaje. Por favor, intenta nuevamente o contáctanos directamente.', 'bot');
+                console.error('Chatbot error:', error);
+            })
+            .finally(() => {
+                chatbotSend.disabled = false;
+                chatbotInput.focus();
+            });
+        }
+
+        // Add message to chat
+        function addMessage(text, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chatbot-message chatbot-message-${type}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            // Render markdown for bot messages, plain text for user messages
+            if (type === 'bot' && typeof marked !== 'undefined') {
+                // Convert markdown to HTML and sanitize it
+                const html = marked.parse(text);
+                const sanitized = typeof DOMPurify !== 'undefined' 
+                    ? DOMPurify.sanitize(html) 
+                    : html;
+                contentDiv.innerHTML = sanitized;
+            } else {
+                // Plain text for user messages
+                const p = document.createElement('p');
+                p.textContent = text;
+                contentDiv.appendChild(p);
+            }
+            
+            messageDiv.appendChild(contentDiv);
+            chatbotMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            scrollToBottom();
+        }
+
+        // Add loading message
+        function addLoadingMessage() {
+            const loadingId = 'loading-' + Date.now();
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chatbot-message chatbot-message-bot';
+            messageDiv.id = loadingId;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'chatbot-message-loading';
+            contentDiv.innerHTML = '<span></span><span></span><span></span>';
+            
+            messageDiv.appendChild(contentDiv);
+            chatbotMessages.appendChild(messageDiv);
+            
+            scrollToBottom();
+            return loadingId;
+        }
+
+        // Remove loading message
+        function removeLoadingMessage(loadingId) {
+            const loadingElement = document.getElementById(loadingId);
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+        }
+
+        // Scroll to bottom of messages
+        function scrollToBottom() {
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        }
+
+        // Send message on button click
+        chatbotSend.addEventListener('click', sendMessage);
+
+        // Send message on Enter key
+        chatbotInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Show badge when window is closed and there are unread messages
+        let unreadCount = 0;
+        chatbotClose.addEventListener('click', function() {
+            if (unreadCount > 0) {
+                chatbotBadge.textContent = unreadCount;
+                chatbotBadge.style.display = 'flex';
             }
         });
     </script>
