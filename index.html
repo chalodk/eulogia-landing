@@ -212,6 +212,9 @@
                 </button>
             </div>
         </div>
+        <div class="chatbot-invitation" id="chatbotInvitation">
+            <p>Hola! Soy Eulogia, ¿Tienes dudas sobre nuestros servicios?</p>
+        </div>
         <button class="chatbot-toggle" id="chatbotToggle" aria-label="Abrir chat">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -380,11 +383,22 @@
         const CHATBOT_PASSWORD = 'm4rkzv1v3';
 
         // Toggle chatbot window
+        const chatbotInvitation = document.getElementById('chatbotInvitation');
+        
         chatbotToggle.addEventListener('click', function() {
             chatbotWindow.classList.toggle('active');
             if (chatbotWindow.classList.contains('active')) {
                 chatbotBadge.style.display = 'none';
                 chatbotInput.focus();
+                // Hide invitation when chat opens
+                if (chatbotInvitation) {
+                    chatbotInvitation.style.display = 'none';
+                }
+            } else {
+                // Show invitation again when chat closes
+                if (chatbotInvitation) {
+                    chatbotInvitation.style.display = 'block';
+                }
             }
         });
 
