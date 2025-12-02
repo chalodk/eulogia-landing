@@ -65,7 +65,7 @@
     <section class="hero" id="inicio">
         <div class="hero-overlay"></div>
         <div class="hero-content">
-            <h1 class="slogan">¿Problemas para subir contratos o finiquitos a la DT?</h1>
+            <h1 class="slogan">¿Problemas para subir documentos a la DT?</h1>
             <p class="tagline">Evita multas. Nosotros los subimos por ti en menos de 4 horas, sin errores y con respaldo legal.</p>
             <a href="https://app.eulogia.cl" class="btn-cta">Comienza ahora</a>
             <a href="#contacto" class="btn-contacto">Contacto</a>
@@ -88,13 +88,13 @@
                         <h3>Carga de todos tus contratos en un par de horas</h3>
                     </li>
                     <li>
-                        <h3>Te avisamos si hay errores antes de cargar</h3>
+                        <h3>Genera anexos de forma masiva</h3>
                     </li>
                     <li>
-                        <h3>Respaldo y comprobantes de envío</h3>
+                        <h3>Recibe todos los comprobantes en tu correo o en una carpeta compartida</h3>
                     </li>
                      <li>
-                        <h3>Compatible con contratos individuales o masivos</h3>
+                        <h3>Revisamos y corrigemos errores antes de cargar</h3>
                     </li>
                 </ul>
             </div>
@@ -398,6 +398,21 @@
         const CHATBOT_USERNAME = 'eulogia';
         const CHATBOT_PASSWORD = 'm4rkzv1v3';
 
+        // Session ID management
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function getSessionId() {
+            const STORAGE_KEY = 'chatbot_session_id';
+            let sessionId = localStorage.getItem(STORAGE_KEY);
+            if (!sessionId) {
+                sessionId = generateSessionId();
+                localStorage.setItem(STORAGE_KEY, sessionId);
+            }
+            return sessionId;
+        }
+
         // Toggle chatbot window
         const chatbotInvitation = document.getElementById('chatbotInvitation');
         
@@ -446,7 +461,8 @@
                     'Authorization': `Basic ${credentials}`
                 },
                 body: JSON.stringify({
-                    chatInput: message
+                    chatInput: message,
+                    sessionId: getSessionId()
                 })
             })
             .then(async response => {
