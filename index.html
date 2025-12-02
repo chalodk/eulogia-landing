@@ -380,7 +380,7 @@
         const chatbotBadge = document.getElementById('chatbotBadge');
 
         // Webhook configuration - Replace with your n8n chatbot webhook URL
-        const CHATBOT_WEBHOOK_URL = 'https://n8n.agroanalytics.cl/webhook/eulogia-chat';
+        const CHATBOT_WEBHOOK_URL = 'https://n8n.agroanalytics.cl/webhook/96e1010a-9380-47f0-b9d7-915068513e80/chat';
         const CHATBOT_USERNAME = 'eulogia';
         const CHATBOT_PASSWORD = 'm4rkzv1v3';
 
@@ -428,26 +428,210 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    'Accept': 'text/event-stream, application/json, text/plain',
                     'Authorization': `Basic ${credentials}`
                 },
                 body: JSON.stringify({
                     chatInput: message
                 })
             })
-            .then(response => {
+            .then(async response => {
                 if (!response.ok) {
                     throw new Error('Error en la respuesta del servidor');
                 }
-                return response.json();
-            })
-            .then(data => {
-                // Remove loading message
-                removeLoadingMessage(loadingId);
                 
-                // Add bot response
-                const botMessage = data.output || data.response || data.text || 'Lo siento, no pude procesar tu mensaje.';
-                addMessage(botMessage, 'bot');
+                // Function to fix numbered lists format in text
+                const fixNumberedLists = (text) => {
+                    if (!text) return text;
+                    let fixed = text;
+                    
+                    // Fix cases like ":)" which might be "1)" that lost the number
+                    fixed = fixed.replace(/:\)\s+/g, '1. ');
+                    
+                    // Fix "\n1)" or "1)" to "\n1. " or "1. " (with optional spaces)
+                    fixed = fixed.replace(/(\n|^)\s*(\d+)\)\s+/g, '$1$2. ');
+                    
+                    // Fix cases where there might be a colon or bullet before the number
+                    fixed = fixed.replace(/(\n|^)[:•]\s*(\d+)\)\s+/g, '$1$2. ');
+                    
+                    // Fix standalone ") " that might be left over (paréntesis sueltos)
+                    fixed = fixed.replace(/(\n|^)\s*\)\s+/g, '$1');
+                    
+                    // Ensure proper markdown list format: convert any remaining "number)" patterns
+                    fixed = fixed.replace(/(\d+)\)\s+/g, '$1. ');
+                    
+                    return fixed;
+                };
+                
+                // Keep loading message visible until we have enough content
+                let streamingMessageElement = null;
+                let streamingContent = null;
+                let hasEnoughContent = false;
+                const MIN_CONTENT_LENGTH = 30; // Minimum characters before showing streaming message
+                const MIN_LOADING_TIME = 1500; // Minimum time to show loading (1.5 seconds)
+                const loadingStartTime = Date.now();
+                
+                // Process streaming response line by line
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let accumulatedText = '';
+                let finalOutput = null;
+                let foundFinalOutput = false;
+                let lastUpdateTime = 0;
+                const UPDATE_INTERVAL = 50; // Update every 50ms for smooth streaming effect
+                
+                // Function to initialize streaming message when ready
+                const initStreamingMessage = () => {
+                    if (!streamingMessageElement) {
+                        removeLoadingMessage(loadingId);
+                        const streamingMessageId = addStreamingMessage();
+                        streamingMessageElement = document.getElementById(streamingMessageId);
+                        streamingContent = streamingMessageElement.querySelector('.streaming-content');
+                        hasEnoughContent = true;
+                    }
+                };
+                
+                // Function to update streaming message with throttling
+                const updateStreamingMessage = (text) => {
+                    const now = Date.now();
+                    const elapsedTime = now - loadingStartTime;
+                    
+                    // Fix numbered lists format before displaying
+                    const fixedText = fixNumberedLists(text);
+                    
+                    // Check if we should show streaming message
+                    if (!hasEnoughContent && (fixedText.length >= MIN_CONTENT_LENGTH || elapsedTime >= MIN_LOADING_TIME)) {
+                        initStreamingMessage();
+                    }
+                    
+                    if (hasEnoughContent && streamingContent && (now - lastUpdateTime >= UPDATE_INTERVAL)) {
+                        streamingContent.textContent = fixedText;
+                        scrollToBottom();
+                        lastUpdateTime = now;
+                    }
+                };
+                
+                // Function to force update (for final output)
+                const forceUpdateStreamingMessage = (text) => {
+                    initStreamingMessage();
+                    if (streamingContent) {
+                        const fixedText = fixNumberedLists(text);
+                        streamingContent.textContent = fixedText;
+                        scrollToBottom();
+                    }
+                };
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    
+                    if (done) break;
+                    
+                    // Decode chunk and add to buffer
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    // Process complete lines (NDJSON format)
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ''; // Keep incomplete line in buffer
+                    
+                    for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine) continue;
+                        
+                        try {
+                            const chunk = JSON.parse(trimmedLine);
+                            
+                            // Only process items with content
+                            if (chunk.type === 'item' && chunk.content) {
+                                // Try to parse content as JSON (it might contain the final output)
+                                try {
+                                    const contentObj = JSON.parse(chunk.content);
+                                    // If content is an object with "output" field, use it as final message
+                                    if (contentObj && typeof contentObj === 'object' && contentObj.output) {
+                                        finalOutput = contentObj.output;
+                                        foundFinalOutput = true;
+                                        // Update streaming message with final output immediately
+                                        forceUpdateStreamingMessage(finalOutput);
+                                        break; // Found final output, exit inner loop
+                                    }
+                                } catch (e) {
+                                    // Content is plain text, accumulate and update in real-time
+                                    accumulatedText += chunk.content;
+                                    // Update streaming message progressively
+                                    updateStreamingMessage(accumulatedText);
+                                    // Small delay to make streaming effect visible
+                                    await new Promise(resolve => setTimeout(resolve, 10));
+                                }
+                            }
+                        } catch (e) {
+                            // Skip invalid JSON lines
+                            continue;
+                        }
+                    }
+                    
+                    // If we found final output, stop reading
+                    if (foundFinalOutput) break;
+                }
+                
+                // Process any remaining buffer
+                if (buffer.trim() && !foundFinalOutput) {
+                    try {
+                        const chunk = JSON.parse(buffer.trim());
+                        if (chunk.type === 'item' && chunk.content) {
+                            try {
+                                const contentObj = JSON.parse(chunk.content);
+                                if (contentObj && typeof contentObj === 'object' && contentObj.output) {
+                                    finalOutput = contentObj.output;
+                                    foundFinalOutput = true;
+                                }
+                            } catch (e) {
+                                accumulatedText += chunk.content;
+                            }
+                        }
+                    } catch (e) {
+                        // Ignore
+                    }
+                }
+                
+                // Final update: use final output if found, otherwise use accumulated text
+                let finalMessage = '';
+                if (foundFinalOutput && finalOutput) {
+                    finalMessage = finalOutput;
+                } else if (accumulatedText) {
+                    finalMessage = accumulatedText.trim();
+                } else {
+                    // No message found, show error
+                    removeLoadingMessage(loadingId);
+                    addMessage('Lo siento, no pude procesar tu mensaje.', 'bot');
+                    return;
+                }
+                
+                // Ensure streaming message is initialized
+                initStreamingMessage();
+                
+                // Pre-process message to fix numbered lists format
+                finalMessage = fixNumberedLists(finalMessage);
+                
+                // Render markdown for final message
+                if (streamingContent) {
+                    if (typeof marked !== 'undefined') {
+                        const html = marked.parse(finalMessage);
+                        const sanitized = typeof DOMPurify !== 'undefined' 
+                            ? DOMPurify.sanitize(html) 
+                            : html;
+                        streamingContent.innerHTML = sanitized;
+                    } else {
+                        streamingContent.textContent = finalMessage;
+                    }
+                }
+                
+                // Convert streaming message to regular message
+                if (streamingMessageElement && streamingMessageElement.parentNode) {
+                    streamingMessageElement.classList.remove('chatbot-message-streaming');
+                    streamingMessageElement.classList.add('chatbot-message-bot');
+                }
+                
+                scrollToBottom();
             })
             .catch(error => {
                 // Remove loading message
@@ -509,6 +693,28 @@
             
             scrollToBottom();
             return loadingId;
+        }
+
+        // Add streaming message (for real-time updates)
+        function addStreamingMessage() {
+            const streamingId = 'streaming-' + Date.now();
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chatbot-message chatbot-message-bot chatbot-message-streaming';
+            messageDiv.id = streamingId;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            const streamingContent = document.createElement('div');
+            streamingContent.className = 'streaming-content';
+            streamingContent.textContent = '';
+            
+            contentDiv.appendChild(streamingContent);
+            messageDiv.appendChild(contentDiv);
+            chatbotMessages.appendChild(messageDiv);
+            
+            scrollToBottom();
+            return streamingId;
         }
 
         // Remove loading message

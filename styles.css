@@ -814,6 +814,14 @@ body {
     animation-delay: -0.16s;
 }
 
+.chatbot-message-streaming {
+    opacity: 1;
+}
+
+.streaming-content {
+    min-height: 1em;
+}
+
 @keyframes bounce {
     0%, 80%, 100% {
         transform: scale(0);
