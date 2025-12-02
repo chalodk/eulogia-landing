@@ -152,7 +152,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     padding: 2rem;
     padding-top: 10rem;
     background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/3_hor-nar.png');
@@ -173,11 +173,12 @@ body {
 }
 
 .hero-content {
-    text-align: center;
+    text-align: left;
     z-index: 2;
     max-width: 900px;
     position: relative;
     width: 100%;
+    padding-left: 4rem;
 }
 
 .slogan {
@@ -210,10 +211,85 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
+.btn-cta {
+    display: inline-block;
+    padding: 1.25rem 3.5rem;
+    background-color: #2c3550;
+    color: hsl(128, 88%, 50%);
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    margin-right: 1rem;
+}
+
+.btn-cta:hover {
+    background-color: #1a252f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
 .btn-contacto:hover {
     background-color: #1a252f;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Trust Section */
+.trust {
+    padding: 4rem 2rem;
+    background-color: #f8f9fa;
+    text-align: center;
+}
+
+.trust-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+}
+
+.trust-text {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    font-weight: 600;
+    margin: 0;
+}
+
+.trust-logo-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    position: relative;
+}
+
+.trust-logo-link:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.trust-logo {
+    max-height: 180px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.linkedin-icon {
+    width: 24px;
+    height: 24px;
+    fill: #0077b5;
+    transition: fill 0.3s ease;
+}
+
+.trust-logo-link:hover .linkedin-icon {
+    fill: #005885;
 }
 
 /* Features Section */
@@ -1063,12 +1139,14 @@ body {
         padding-top: 7rem;
         background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/1_vert-nar.png');
         justify-content: flex-start;
+        align-items: center;
         padding-top: 5.5rem;
     }
 
     .hero-content {
         padding-left: 0;
         margin-top: 1rem;
+        text-align: center;
     }
 
     .slogan {
@@ -1082,6 +1160,24 @@ body {
     .btn-contacto {
         padding: 1rem 2.5rem;
         font-size: 1.1rem;
+    }
+
+    .btn-cta {
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        margin-right: 0.75rem;
+    }
+
+    .trust {
+        padding: 3rem 1.5rem;
+    }
+
+    .trust-text {
+        font-size: 1.3rem;
+    }
+
+    .trust-logo {
+        max-height: 60px;
     }
 
     .features {
@@ -1138,11 +1234,13 @@ body {
         min-height: 90vh;
         background-image: url('https://afqnrbwwkseseegfreyr.supabase.co/storage/v1/object/public/eulogia/landing/1_vert-nar.png');
         justify-content: flex-start;
+        align-items: center;
     }
 
     .hero-content {
         padding-left: 0;
         margin-top: 1rem;
+        text-align: center;
     }
 
     .slogan {
@@ -1156,6 +1254,30 @@ body {
     .btn-contacto {
         padding: 0.875rem 2rem;
         font-size: 1rem;
+    }
+
+    .btn-cta {
+        padding: 0.875rem 2rem;
+        font-size: 1rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .trust {
+        padding: 2.5rem 1rem;
+    }
+
+    .trust-text {
+        font-size: 1.1rem;
+    }
+
+    .trust-logo {
+        max-height: 50px;
+    }
+
+    .linkedin-icon {
+        width: 20px;
+        height: 20px;
     }
 
     .features-list li {
